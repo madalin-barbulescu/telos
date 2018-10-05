@@ -126,52 +126,16 @@ namespace eosiosystem {
           account_name bp_name = prods[_grotations.bp_out_index].producer_name;
           account_name sbp_name = prods[_grotations.sbp_in_index].producer_name;
 
-          it_bp = std::find_if(prods.begin(), prods.end(), [&bp_name](const eosio::producer_key &g) {
-            return g.producer_name == bp_name; 
-          });   
-
-          it_sbp = std::find_if(prods.begin(), prods.end(), [&sbp_name](const eosio::producer_key &g) {
-            return g.producer_name == sbp_name; 
-          });
-
+          it_bp = prods.begin() + _grotations.bp_out_index;
+          it_sbp = prods.begin() + _grotations.sbp_in_index;
 
           print("\n sb_name: ", name{sbp_name});
           print("\n it_sbp: ", name{it_sbp->producer_name});
 
-          if(it_bp == prods.end() && it_sbp == prods.end()) {
-            setBPsRotation(0, 0);
+          setBPsRotation(bp_name, sbp_name);
+        } 
 
-            _grotations.bp_out_index = TOP_PRODUCERS;
-            _grotations.sbp_in_index = MAX_PRODUCERS + 1;
-
-            it_bp = prods.end();
-            it_sbp = prods.end();
-
-          } else {
-            if(it_bp != prods.end() && it_sbp == prods.end()) {
-              if(_grotations.sbp_in_index > totalActiveVotedProds - 1) {
-                _grotations.sbp_in_index = TOP_PRODUCERS;
-                 
-                sbp_name = prods[_grotations.sbp_in_index].producer_name;
-                it_sbp = std::find_if(prods.begin(), prods.end(), [&sbp_name](const eosio::producer_key &g) {
-                  return g.producer_name == sbp_name; 
-                });
-              }
-            } else if (it_bp == prods.end() && it_sbp != prods.end()) {
-              if(_grotations.bp_out_index > TOP_PRODUCERS - 1) {
-                _grotations.bp_out_index = 0;
-                
-                bp_name = prods[_grotations.bp_out_index].producer_name;
-                it_bp = std::find_if(prods.begin(), prods.end(), [&bp_name](const eosio::producer_key &g) {
-                  return g.producer_name == bp_name; 
-                });
-              }
-            } else {
-              setBPsRotation(bp_name, sbp_name);
-            }
-          }
-      } 
-      updateRotationTime(block_time);
+        updateRotationTime(block_time);
       }
       else {
         if(_grotations.bp_currently_out != 0 && _grotations.sbp_currently_in != 0) {
@@ -184,7 +148,6 @@ namespace eosiosystem {
           it_sbp = std::find_if(prods.begin(), prods.end(), [&sbp_name](const eosio::producer_key &g) {
             return g.producer_name == sbp_name; 
           });
-
           auto _bp_index = std::distance(prods.begin(), it_bp);
           auto _sbp_index = std::distance(prods.begin(), it_sbp);
 
@@ -197,6 +160,8 @@ namespace eosiosystem {
             }
           } else if (totalActiveVotedProds > TOP_PRODUCERS && (!is_in_range(_bp_index, 0, TOP_PRODUCERS) || !is_in_range(_sbp_index, TOP_PRODUCERS, MAX_PRODUCERS))) {
               setBPsRotation(0, 0);
+              it_bp = prods.end();
+              it_sbp = prods.end();
           }
         }
     }
@@ -216,8 +181,7 @@ namespace eosiosystem {
 
           if(pIt->producer_name == it_bp->producer_name) {
             print("\nprod sbp added to schedule -> ", name{it_sbp->producer_name});
-            if(it_sbp->producer_name == prods[_grotations.sbp_in_index].producer_name) top_producers.emplace_back(*it_sbp);
-            else  top_producers.emplace_back(prods[_grotations.sbp_in_index]);
+            top_producers.emplace_back(*it_sbp);
           } else {
             print("\nprod bp added to schedule -> ", name{pIt->producer_name});
             top_producers.emplace_back(*pIt);
