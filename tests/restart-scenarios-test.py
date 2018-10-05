@@ -6,6 +6,7 @@ from WalletMgr import WalletMgr
 from TestHelper import TestHelper
 
 import random
+import time
 
 ###############################################################
 # Test for different nodes restart scenarios.
@@ -60,6 +61,8 @@ try:
     cluster.cleanup()
     walletMgr.killall(allInstances=killAll)
     walletMgr.cleanup()
+
+    time.sleep(5)
 
     Print ("producing nodes: %d, topology: %s, delay between nodes launch(seconds): %d, chain sync strategy: %s" % (
     pnodes, topo, delay, chainSyncStrategyStr))

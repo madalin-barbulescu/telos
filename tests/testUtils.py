@@ -7,13 +7,14 @@ import json
 import shlex
 from sys import stdout
 import traceback
+from core_symbol import CORE_SYMBOL
 
 ###########################################################################################
 class Utils:
     Debug=False
     FNull = open(os.devnull, 'w')
 
-    EosClientPath="programs/cleos/cleos"
+    EosClientPath="programs/teclos/teclos"
 
     EosWalletName="tkeosd"
     EosWalletPath="programs/tkeosd/"+ EosWalletName
@@ -405,7 +406,7 @@ class Node(object):
 
         return True if blockNum <= node_block_num else False
 
-    
+
     # pylint: disable=too-many-branches
     def getTransaction(self, transId, retry=True, silentErrors=False):
         if not self.enableMongo:
@@ -1182,7 +1183,7 @@ class Node(object):
             Utils.Print("ERROR: Node relaunch Failed.")
             self.pid=None
             return False
-            
+
         self.killed=False
         return True
 

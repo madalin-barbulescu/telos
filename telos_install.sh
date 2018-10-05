@@ -29,7 +29,11 @@
 #
 # https://github.com/EOSIO/eos/blob/master/LICENSE.txt
 ##########################################################################
-   
+
+if [ "$(id -u)" -ne 0 ]; then
+        printf "\n\tThis requires sudo. Please run with sudo.\n\n"
+        exit -1
+fi   
 
    CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
    if [ "${CWD}" != "${PWD}" ]; then
@@ -55,7 +59,7 @@
 
    install_symlinks() {
       printf "\\n\\tInstalling EOSIO Binary Symlinks\\n\\n"
-      create_symlink "cleos"
+      create_symlink "teclos"
       create_symlink "eosio-abigen"
       create_symlink "eosio-launcher"
       create_symlink "eosio-s2wasm"

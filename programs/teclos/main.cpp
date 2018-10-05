@@ -276,25 +276,28 @@ void sign_transaction(signed_transaction& trx, fc::variant& required_keys, const
 
 fc::variant push_transaction( signed_transaction& trx, int32_t extra_kcpu = 1000, packed_transaction::compression_type compression = packed_transaction::none ) {
    auto info = get_info();
-   trx.expiration = info.head_block_time + tx_expiration;
 
-   // Set tapos, default to last irreversible block if it's not specified by the user
-   block_id_type ref_block_id = info.last_irreversible_block_id;
-   try {
-      fc::variant ref_block;
-      if (!tx_ref_block_num_or_id.empty()) {
-         ref_block = call(get_block_func, fc::mutable_variant_object("block_num_or_id", tx_ref_block_num_or_id));
-         ref_block_id = ref_block["id"].as<block_id_type>();
+   if (trx.signatures.size() == 0) { // #5445 can't change txn content if already signed
+      trx.expiration = info.head_block_time + tx_expiration;
+
+      // Set tapos, default to last irreversible block if it's not specified by the user
+      block_id_type ref_block_id = info.last_irreversible_block_id;
+      try {
+         fc::variant ref_block;
+         if (!tx_ref_block_num_or_id.empty()) {
+            ref_block = call(get_block_func, fc::mutable_variant_object("block_num_or_id", tx_ref_block_num_or_id));
+            ref_block_id = ref_block["id"].as<block_id_type>();
+         }
+      } EOS_RETHROW_EXCEPTIONS(invalid_ref_block_exception, "Invalid reference block num or id: ${block_num_or_id}", ("block_num_or_id", tx_ref_block_num_or_id));
+      trx.set_reference_block(ref_block_id);
+
+      if (tx_force_unique) {
+         trx.context_free_actions.emplace_back( generate_nonce_action() );
       }
-   } EOS_RETHROW_EXCEPTIONS(invalid_ref_block_exception, "Invalid reference block num or id: ${block_num_or_id}", ("block_num_or_id", tx_ref_block_num_or_id));
-   trx.set_reference_block(ref_block_id);
 
-   if (tx_force_unique) {
-      trx.context_free_actions.emplace_back( generate_nonce_action() );
+      trx.max_cpu_usage_ms = tx_max_cpu_usage;
+      trx.max_net_usage_words = (tx_max_net_usage + 7)/8;
    }
-
-   trx.max_cpu_usage_ms = tx_max_cpu_usage;
-   trx.max_net_usage_words = (tx_max_net_usage + 7)/8;
 
    if (!tx_skip_sign) {
       auto required_keys = determine_required_keys(trx);
@@ -602,7 +605,7 @@ authority parse_json_authority(const std::string& authorityJsonOrFile) {
 }
 
 authority parse_json_authority_or_key(const std::string& authorityJsonOrFile) {
-   if (boost::istarts_with(authorityJsonOrFile, "EOS") || boost::istarts_with(authorityJsonOrFile, "PUB_R1")) {
+   if (boost::istarts_with(authorityJsonOrFile, "TLOS") || boost::istarts_with(authorityJsonOrFile, "PUB_R1")) {
       try {
          return authority(public_key_type(authorityJsonOrFile));
       } EOS_RETHROW_EXCEPTIONS(public_key_type_exception, "Invalid public key: ${public_key}", ("public_key", authorityJsonOrFile))
@@ -681,8 +684,8 @@ struct set_account_permission_subcommand {
                const auto& existing_permissions = account_result.get_object()["permissions"].get_array();
                auto permissionPredicate = [this](const auto& perm) {
                   return perm.is_object() &&
-                        perm.get_object().contains("permission") &&
-                        boost::equals(perm.get_object()["permission"].get_string(), permissionStr);
+                        perm.get_object().contains("perm_name") &&
+                        boost::equals(perm.get_object()["perm_name"].get_string(), permissionStr);
                };
 
                auto itr = boost::find_if(existing_permissions, permissionPredicate);
@@ -788,9 +791,9 @@ void ensure_keosd_running(CLI::App* app) { // TELOS CHANGES: rename keosd to tke
     // This extra check is necessary when running cleos like this: ./cleos ...
     if (binPath.filename_is_dot())
         binPath.remove_filename();
-    binPath.append("tkeosd"); // if cleos and tkeosd are in the same installation directory
+    binPath.append(key_store_executable_name); // if teclos and tkeosd are in the same installation directory
     if (!boost::filesystem::exists(binPath)) {
-        binPath.remove_filename().remove_filename().append("tkeosd").append("tkeosd");
+        binPath.remove_filename().remove_filename().append("tkeosd").append(key_store_executable_name);
     }
 
     const auto& lo_address = resolved_url.resolved_addresses.front();
@@ -1333,7 +1336,7 @@ struct buyram_subcommand {
                   ("payer", from_str)
                   ("receiver", receiver_str)
                   ("bytes", fc::to_uint64(amount) * 1024ull);
-            send_actions({create_action({permission_level{from_str,config::active_name}}, config::system_account_name, N(buyrambytes), act_payload)});            
+            send_actions({create_action({permission_level{from_str,config::active_name}}, config::system_account_name, N(buyrambytes), act_payload)});
          } else {
             fc::variant act_payload = fc::mutable_variant_object()
                ("payer", from_str)
@@ -2182,7 +2185,7 @@ int main( int argc, char** argv ) {
 
    auto getSchedule = get_schedule_subcommand{get};
    auto getTransactionId = get_transaction_id_subcommand{get};
-   
+
    /*
    auto getTransactions = get->add_subcommand("transactions", localized("Retrieve all transactions with specific account name referenced in their scope"), false);
    getTransactions->add_option("account_name", account_name, localized("name of account to query on"))->required();
@@ -2354,7 +2357,6 @@ int main( int argc, char** argv ) {
 
    add_standard_transaction_options(transfer, "sender@active");
    transfer->set_callback([&] {
-      signed_transaction trx;
       if (tx_force_unique && memo.size() == 0) {
          // use the memo to add a nonce
          memo = generate_nonce_string();

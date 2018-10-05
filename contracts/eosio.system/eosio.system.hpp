@@ -52,20 +52,21 @@ namespace eosiosystem {
       uint16_t             last_producer_schedule_size = 0;
       double               total_producer_vote_weight = 0; /// the sum of all producer votes
       block_timestamp      last_name_close;
+      uint32_t             last_claimrewards = 0;
+      uint32_t             next_payment = 0;
 
       // explicit serialization macro is not necessary, used here only to improve compilation time
       EOSLIB_SERIALIZE_DERIVED( eosio_global_state, eosio::blockchain_parameters,
                                 (max_ram_size)(total_ram_bytes_reserved)(total_ram_stake)
                                 (last_producer_schedule_update)(last_pervote_bucket_fill)
                                 (pervote_bucket)(perblock_bucket)(total_unpaid_blocks)(total_activated_stake)(thresh_activated_stake_time)
-                                (last_producer_schedule_size)(total_producer_vote_weight)(last_name_close) )
+                                (last_producer_schedule_size)(total_producer_vote_weight)(last_name_close)(last_claimrewards)(next_payment) )
    };
 
    /**
     * TELOS CHANGES:
     * 
-    * 1. Added missed_blocks field, used for counting missed blocks and
-    *    adjusting producer payout accordingly.
+    * 1. Added missed_blocks field, used for counting missed blocks.
     */
    struct producer_info {
       account_name          owner;
@@ -75,6 +76,7 @@ namespace eosiosystem {
       std::string           url;
       uint32_t              unpaid_blocks = 0;
       uint32_t              missed_blocks = 0;
+      uint32_t              blocks_per_cycle = 0;
       uint64_t              last_claim_time = 0;
       uint16_t              location = 0;
 
@@ -85,7 +87,7 @@ namespace eosiosystem {
 
       // explicit serialization macro is not necessary, used here only to improve compilation time
       EOSLIB_SERIALIZE( producer_info, (owner)(total_votes)(producer_key)(is_active)(url)
-                        (unpaid_blocks)(last_claim_time)(location) )
+                        (unpaid_blocks)(missed_blocks)(blocks_per_cycle)(last_claim_time)(location) )
    };
 
    struct rotation_info {
@@ -95,6 +97,11 @@ namespace eosiosystem {
       uint32_t               sbp_in_index;
       block_timestamp        next_rotation_time;
       block_timestamp        last_rotation_time;
+      account_name           current_bp; 
+      block_timestamp        last_time_block_produced;
+
+      EOSLIB_SERIALIZE( rotation_info, (bp_currently_out)(sbp_currently_in)(bp_out_index)(sbp_in_index)(next_rotation_time)
+                        (last_rotation_time)(current_bp)(last_time_block_produced) )
    };
 
    struct voter_info {
@@ -102,6 +109,7 @@ namespace eosiosystem {
       account_name                proxy = 0; /// the proxy set by the voter, if any
       std::vector<account_name>   producers; /// the producers approved by this voter if no proxy set
       int64_t                     staked = 0;
+      int64_t                 last_stake = 0;
 
       /**
        *  Every time a vote is cast we must first "undo" the last vote weight, before casting the
@@ -125,7 +133,7 @@ namespace eosiosystem {
       uint64_t primary_key()const { return owner; }
 
       // explicit serialization macro is not necessary, used here only to improve compilation time
-      EOSLIB_SERIALIZE( voter_info, (owner)(proxy)(producers)(staked)(last_vote_weight)(proxied_vote_weight)(is_proxy)(reserved1)(reserved2)(reserved3) )
+      EOSLIB_SERIALIZE( voter_info, (owner)(proxy)(producers)(staked)(last_stake)(last_vote_weight)(proxied_vote_weight)(is_proxy)(reserved1)(reserved2)(reserved3) )
    };
 
    typedef eosio::multi_index< N(voters), voter_info>  voters_table;
@@ -237,6 +245,8 @@ namespace eosiosystem {
         
       private:
          
+         void recalculate_votes();
+
          void updateRotationTime(block_timestamp block_time);
 
          void setBPsRotation(account_name bpOut, account_name sbpIn);
@@ -265,8 +275,16 @@ namespace eosiosystem {
 
          bool is_in_range(int32_t index, int32_t low_bound, int32_t up_bound);
 
-         
+         void check_missed_blocks(block_timestamp timestamp, account_name producer);
 
+         void set_producer_block_produced(account_name producer, uint32_t amount);
+
+         void set_producer_block_missed(account_name producer, uint32_t amount);
+
+         void update_producer_blocks(account_name producer, uint32_t amountBlocksProduced, uint32_t amountBlocksMissed);
+
+         bool crossed_missed_blocks_threshold(uint32_t amountBlocksMissed);
+         
    };
 
 } /// eosiosystem

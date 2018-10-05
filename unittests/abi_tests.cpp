@@ -542,7 +542,7 @@ struct abi_gen_helper {
 
     std::string contract;
     std::vector<std::string> actions;
-    
+
     auto extra_args = std::vector<std::string>{"-fparse-all-comments", "--std=c++14", "--target=wasm32", "-ffreestanding", "-nostdlib",
       "-nostdlibinc", "-fno-threadsafe-statics", "-fno-rtti",  "-fno-exceptions",
       include_param, boost_include_param, stdcpp_include_param,
@@ -551,7 +551,7 @@ struct abi_gen_helper {
     bool res = runToolOnCodeWithArgs(
       new find_eosio_abi_macro_action(contract, actions, ""),
       source,
-      extra_args      
+      extra_args
     );
     FC_ASSERT(res == true);
 

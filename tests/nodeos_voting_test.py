@@ -10,6 +10,7 @@ from TestHelper import TestHelper
 import decimal
 import math
 import re
+import time
 
 ###############################################################
 # nodeos_voting_test
@@ -146,7 +147,7 @@ def verifyProductionRounds(trans, node, prodsActive, rounds):
         prodsSeen={}
         lastBlockProducer=None
         for j in range(0, 21):
-            # each new set of 12 blocks should have a different blockProducer 
+            # each new set of 12 blocks should have a different blockProducer
             if lastBlockProducer is not None and lastBlockProducer==getBlockProducer(node, blockNum):
                 Utils.cmdError("expected blockNum %s to be produced by any of the valid producers except %s" % (blockNum, lastBlockProducer))
                 errorExit("Failed because of incorrect block producer order")
@@ -208,6 +209,7 @@ try:
 
     cluster.killall(allInstances=killAll)
     cluster.cleanup()
+    time.sleep(5)
     Print("Stand up cluster")
     if cluster.launch(prodCount=prodCount, onlyBios=False, dontKill=dontKill, pnodes=totalNodes, totalNodes=totalNodes, totalProducers=totalNodes*21, p2pPlugin=p2pPlugin) is False:
         Utils.cmdError("launcher")

@@ -27,7 +27,9 @@
         {"name":"bp_out_index",         "type":"uint32"},
         {"name":"sbp_in_index",         "type":"uint32"},
         {"name":"next_rotation_time",   "type":"block_timestamp_type"},
-        {"name":"last_rotation_time",   "type":"block_timestamp_type"}
+        {"name":"last_rotation_time",   "type":"block_timestamp_type"},
+        {"name":"current_bp",                 "type":"account_name"},
+        {"name":"last_time_block_produced",   "type":"block_timestamp_type"}
       ]
     },{
       "name": "permission_level",
@@ -282,6 +284,8 @@
          {"name":"is_active",       "type":"bool"},
          {"name":"url",             "type":"string"},
          {"name":"unpaid_blocks",   "type":"uint32"},
+         {"name":"missed_blocks",   "type":"uint32"},
+         {"name":"blocks_per_cycle",   "type":"uint32"},
          {"name":"last_claim_time", "type":"uint64"},
          {"name":"location",        "type":"uint16"}
       ]
@@ -329,6 +333,7 @@
         {"name":"proxy",                "type":"account_name"},
         {"name":"producers",            "type":"account_name[]"},
         {"name":"staked",               "type":"int64"},
+        {"name":"last_stake",           "type":"int64"},
         {"name":"last_vote_weight",     "type":"float64"},
         {"name":"proxied_vote_weight",  "type":"float64"},
         {"name":"is_proxy",             "type":"bool"}

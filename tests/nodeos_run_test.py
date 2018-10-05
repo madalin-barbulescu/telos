@@ -8,6 +8,7 @@ from TestHelper import TestHelper
 
 import decimal
 import re
+import time
 
 ###############################################################
 # nodeos_run_test
@@ -49,7 +50,7 @@ killWallet=not dontKill
 dontBootstrap=sanityTest
 
 WalletdName="tkeosd"
-ClientName="cleos"
+ClientName="teclos"
 timeout = .5 * 12 * 2 + 60 # time for finalization with 1 producer + 60 seconds padding
 Utils.setIrreversibleTimeout(timeout)
 
@@ -67,6 +68,7 @@ try:
     if localTest and not dontLaunch:
         cluster.killall(allInstances=killAll)
         cluster.cleanup()
+        time.sleep(5)
         Print("Stand up cluster")
         if cluster.launch(prodCount=prodCount, onlyBios=onlyBios, dontKill=dontKill, dontBootstrap=dontBootstrap, p2pPlugin=p2pPlugin) is False:
             cmdError("launcher")
@@ -201,7 +203,7 @@ try:
     Print("Validating accounts before user accounts creation")
     cluster.validateAccounts(None)
 
-    # create accounts via eosio as otherwise a bid is needed 
+    # create accounts via eosio as otherwise a bid is needed
     Print("Create new account %s via %s" % (testeraAccount.name, cluster.eosioAccount.name))
     transId=node.createInitializeAccount(testeraAccount, cluster.eosioAccount, stakedDeposit=0, waitForTransBlock=False, exitOnError=True)
 

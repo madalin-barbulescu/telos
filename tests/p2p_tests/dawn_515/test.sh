@@ -17,7 +17,7 @@ delay=1
 read -d '' genesis << EOF
 {
   "initial_timestamp": "2018-06-01T12:00:00.000",
-  "initial_key": "EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV",
+  "initial_key": "TLOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV",
   "initial_configuration": {
     "max_block_net_usage": 1048576,
     "target_block_net_usage_pct": 1000,
@@ -36,6 +36,7 @@ read -d '' genesis << EOF
     "max_inline_action_size": 4096,
     "max_inline_action_depth": 4,
     "max_authority_depth": 6
+  }
 }
 EOF
 
@@ -49,7 +50,7 @@ http-server-address = 127.0.0.1:8888
 blocks-dir = blocks
 p2p-listen-endpoint = 0.0.0.0:9876
 allowed-connection = any
-private-key = ['EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV','5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3']
+private-key = ['TLOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV','5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3']
 send-whole-blocks = true
 readonly = 0
 p2p-max-nodes-per-host = 10
@@ -280,9 +281,9 @@ if [ $res -ne 0 ]; then
     ret=1
 fi
 
-b5idbios=`./programs/cleos/cleos -u http://localhost:8888 get block 5 | grep "^ *\"id\""`
-b5id00=`./programs/cleos/cleos -u http://localhost:8889 get block 5 | grep "^ *\"id\""`
-b5id01=`./programs/cleos/cleos -u http://localhost:8890 get block 5 | grep "^ *\"id\""`
+b5idbios=`./programs/teclos/teclos -u http://localhost:8888 get block 5 | grep "^ *\"id\""`
+b5id00=`./programs/teclos/teclos -u http://localhost:8889 get block 5 | grep "^ *\"id\""`
+b5id01=`./programs/teclos/teclos -u http://localhost:8890 get block 5 | grep "^ *\"id\""`
 
 if [ "$b5idbios" != "$b5id00" ]; then
     echo FAILURE: nodes are not in sync

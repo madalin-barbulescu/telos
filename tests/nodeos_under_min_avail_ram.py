@@ -12,6 +12,7 @@ import time
 import decimal
 import math
 import re
+import time
 
 class NamedAccounts:
 
@@ -75,6 +76,9 @@ try:
 
     cluster.killall(allInstances=killAll)
     cluster.cleanup()
+
+    time.sleep(5)
+
     Print("Stand up cluster")
     minRAMFlag="--chain-state-db-guard-size-mb"
     minRAMValue=1002
@@ -233,7 +237,7 @@ try:
             count+=1
             fromIndex=fromIndexStart+fromIndexOffset
             if fromIndex>=namedAccounts.numAccounts:
-                fromIndex-=namedAccounts.numAccounts 
+                fromIndex-=namedAccounts.numAccounts
             toIndex=fromIndex+1
             if toIndex==namedAccounts.numAccounts:
                 toIndex=0
@@ -292,7 +296,7 @@ try:
            break
         fromIndex=fromIndexStart+fromIndexOffset
         if fromIndex>=namedAccounts.numAccounts:
-            fromIndex-=namedAccounts.numAccounts 
+            fromIndex-=namedAccounts.numAccounts
         toIndex=fromIndex+1
         if toIndex==namedAccounts.numAccounts:
             toIndex=0

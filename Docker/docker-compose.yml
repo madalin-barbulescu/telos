@@ -30,7 +30,7 @@ services:
     links:
       - nodeosd
     volumes:
-      - keosd-data-volume:/opt/eosio/bin/data-dir
+      - tkeosd-data-volume:/opt/eosio/bin/data-dir
     stop_grace_period: 10m
 
 volumes:

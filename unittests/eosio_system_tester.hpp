@@ -372,13 +372,25 @@ public:
                                 );
    }
 
-   double stake2votes( asset stake ) {
-      auto now = control->pending_block_time().time_since_epoch().count() / 1000000;
-      return stake.get_amount() * pow(2, int64_t((now - (config::block_timestamp_epoch / 1000)) / (86400 * 7))/ double(52) ); // 52 week periods (i.e. ~years)
+   double stake2votes( const string& s, double voted_producers_count, double total_producers_count ) {
+      return stake2votes( core_from_string(s), voted_producers_count, total_producers_count );
    }
 
-   double stake2votes( const string& s ) {
-      return stake2votes( core_from_string(s) );
+   double stake2votes( asset stake, double voted_producers_count, double total_producers_count ){
+      if (voted_producers_count == 0.0) {
+      	return 0;
+      }
+ 
+      // 30 max producers allowed to vote
+      if(total_producers_count > 30) {
+         total_producers_count = 30;
+      }
+ 
+	double staked = stake.get_amount();
+	double VOTE_VARIATION = 0.1;
+      double k = 1 - VOTE_VARIATION;
+      
+      return (k * sin(M_PI_2 * (voted_producers_count / total_producers_count)) + VOTE_VARIATION) * double(staked);
    }
 
    fc::variant get_stats( const string& symbolname ) {

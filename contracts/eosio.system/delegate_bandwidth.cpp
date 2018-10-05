@@ -193,7 +193,7 @@ namespace eosiosystem {
 
       auto fee = ( tokens_out.amount + 199 ) / 200; /// .5% fee (round up)
       // since tokens_out.amount was asserted to be at least 2 earlier, fee.amount < tokens_out.amount
-      
+
       if( fee > 0 ) {
          INLINE_ACTION_SENDER(eosio::token, transfer)( N(eosio.token), {account,N(active)},
             { account, N(eosio.ramfee), asset(fee), std::string("sell ram fee") } );
@@ -202,7 +202,7 @@ namespace eosiosystem {
 
    void validate_b1_vesting( int64_t stake ) {
       const int64_t base_time = 1527811200; /// 2018-06-01
-      const int64_t max_claimable = 100'000'000'0000ll;
+      const int64_t max_claimable = 19'047'324'9000ll;
       const int64_t claimable = int64_t(max_claimable * double(now()-base_time) / (10*seconds_per_year) );
 
       eosio_assert( max_claimable - claimable <= stake, "b1 can only claim their tokens over 10 years" );
@@ -398,7 +398,7 @@ namespace eosiosystem {
       eosio_assert( asset() <= unstake_cpu_quantity, "must unstake a positive amount" );
       eosio_assert( asset() <= unstake_net_quantity, "must unstake a positive amount" );
       eosio_assert( asset() < unstake_cpu_quantity + unstake_net_quantity, "must unstake a positive amount" );
-      eosio_assert( _gstate.total_activated_stake >= min_activated_stake,
+      eosio_assert( _gstate.total_activated_stake >= min_activated_stake || _gstate.thresh_activated_stake_time > 0,
                     "cannot undelegate bandwidth until the chain is activated (at least 15% of all tokens participate in voting)" );
 
       changebw( from, receiver, -unstake_net_quantity, -unstake_cpu_quantity, false);

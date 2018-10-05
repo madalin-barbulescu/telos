@@ -20,7 +20,7 @@ namespace eosiosystem {
       //print( "construct system\n" );
       _gstate = _global.exists() ? _global.get() : get_default_parameters();
       _grotations = _rotations.get_or_create(_self, rotation_info{
-        0, 0, 21, 75, block_timestamp(), block_timestamp()
+        0, 0, 21, 75, block_timestamp(), block_timestamp(), 0, block_timestamp()
       });
       auto itr = _rammarket.find(S(4,RAMCORE));
 
