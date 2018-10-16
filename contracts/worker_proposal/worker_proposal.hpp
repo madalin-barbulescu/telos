@@ -11,7 +11,7 @@ class workerproposal : public contract {
       ~workerproposal();
 
       /// @abi action
-      void propose(account_name proposer, std::string title, std::string text, uint16_t cycles, std::string ipfs_location, asset amount, account_name send_to);
+      void submission(account_name proposer, std::string title, std::string text, uint16_t cycles, std::string ipfs_location, asset amount, account_name send_to);
 
       /// @abi action
       void vote(uint64_t proposal_id, uint16_t direction, account_name voter);
@@ -41,7 +41,7 @@ class workerproposal : public contract {
         auto primary_key() const { return id; }
       };
 
-      struct environment1 {
+      struct wp_env {
         account_name publisher;
         uint64_t total_voters;
         uint64_t quorum_threshold;
@@ -51,17 +51,17 @@ class workerproposal : public contract {
 
         uint64_t primary_key() const { return publisher; }
       };
-      environment1 env_struct1;
+      wp_env wp_env_struct;
 
       typedef eosio::multi_index< N(proposals), proposal> proposals;
-      typedef singleton<N(environment1), environment1> environment_singleton1;
+      typedef singleton<N(wp_env), wp_env> wp_environment_singleton;
 
-      environment_singleton1 env_singleton1;    
+      wp_environment_singleton wp_env_singleton;    
 
     protected:
 
       void update_env();
-      bool check_fee_treshold(proposal p);
-      bool check_treshold(proposal p);
+      bool check_fee_threshold(proposal p);
+      bool check_threshold(proposal p);
       void update_outstanding(proposal &p);
 };

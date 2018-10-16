@@ -3024,18 +3024,6 @@ BOOST_FIXTURE_TEST_CASE( setram_effect, eosio_system_tester ) try {
 
 BOOST_FIXTURE_TEST_CASE( worker_proposal, eosio_system_tester ) try {
 
-      // base_tester::set_authority( N(eosio.saving), name(config::active_name).to_string(), 
-      //                         authority(
-      //                               1,
-      //                               {key_weight{get_public_key( N(eosio.saving), "active" ), 1}},
-      //                               {
-      //                                     permission_level_weight{{N(eosio.saving), config::eosio_code_name}, 1},
-      //                                     permission_level_weight{{N(eosio.wps),  config::active_name}, 1}
-      //                               }
-      //                         ),
-      //                         name(config::owner_name).to_string()
-      //                         );
-
       // CREATE 40 voters and 1 proposer
       const asset net = core_from_string("80.0000");
       const asset cpu = core_from_string("80.0000");

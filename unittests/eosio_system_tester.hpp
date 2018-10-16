@@ -129,7 +129,7 @@ public:
    //transaction_trace_ptr set_rotate(bool state) {}
    
    void create_proposal( account_name proposer, std::string title, std::string text, uint16_t cycles, std::string ipfs_location, asset amount, account_name send_to) {
-      base_tester::push_action(N(eosio.saving), N(propose), proposer, mvo()
+      base_tester::push_action(N(eosio.saving), N(submission), proposer, mvo()
                               ("proposer",      proposer)
                               ("title",         title)
                               ("text",          text)

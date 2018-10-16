@@ -4,40 +4,30 @@
 using namespace eosio;
 using eosio::print;
 
-workerproposal::workerproposal(account_name self) : contract(self), env_singleton1(self, self) {
-    if (!env_singleton1.exists()) {
-
-        env_struct1 = environment1{
+workerproposal::workerproposal(account_name self) : contract(self), wp_env_singleton(self, self) {
+    wp_env_struct = wp_env_singleton.get_or_create(_self, 
+        wp_env{
             _self, //publisher
             0, //initial total_voters
             0, //initial quorum_threshold
             2500000, // cycle duration in seconds (default 2,500,000 or 5,000,000 blocks or ~29 days)
             3, // percent from requested amount (default 3%)
             500000 // minimum fee amount (default 50 TLOS)
-        };
-
-        update_env();
-        env_singleton1.set(env_struct1, _self);
-    } else {
-
-        env_struct1 = env_singleton1.get();     
-        update_env();
-        env_singleton1.set(env_struct1, _self);
-    }
+        }
+    );
+    update_env();
 }
 
 workerproposal::~workerproposal() {
-    if (env_singleton1.exists()) {
-        env_singleton1.set(env_struct1, _self);
-    }
+    wp_env_singleton.set(wp_env_struct, _self);
 }
 
-void workerproposal::propose(account_name proposer, std::string title, std::string text, uint16_t cycles, std::string ipfs_location, asset amount, account_name send_to) {
+void workerproposal::submission(account_name proposer, std::string title, std::string text, uint16_t cycles, std::string ipfs_location, asset amount, account_name send_to) {
     require_auth(proposer);
 
     // calc fee
-    uint64_t fee_amount = uint64_t(amount.amount) * uint64_t( env_struct1.fee_percentage ) / uint64_t(100);
-    fee_amount = fee_amount > env_struct1.fee_min ? fee_amount :  env_struct1.fee_min;
+    uint64_t fee_amount = uint64_t(amount.amount) * uint64_t( wp_env_struct.fee_percentage ) / uint64_t(100);
+    fee_amount = fee_amount > wp_env_struct.fee_min ? fee_amount :  wp_env_struct.fee_min;
 
     // transfer the fee
     action(permission_level{ proposer, N(active) }, N(eosio.token), N(transfer), make_tuple(
@@ -86,7 +76,7 @@ void workerproposal::vote(uint64_t proposal_id, uint16_t direction, account_name
     
     auto prop = *p;
 
-    eosio_assert(prop.created + prop.cycles * env_struct1.cycle_duration > now(), "Proposal Has Expired");
+    eosio_assert(prop.created + prop.cycles * wp_env_struct.cycle_duration > now(), "Proposal Has Expired");
 
     if (vid.receipt_list.empty()) {
 
@@ -95,7 +85,7 @@ void workerproposal::vote(uint64_t proposal_id, uint16_t direction, account_name
     	    _self,
     	    prop.id,
             direction,
-            prop.created + prop.cycles * env_struct1.cycle_duration,
+            prop.created + prop.cycles * wp_env_struct.cycle_duration,
             voter
 	    )).send();
 
@@ -120,7 +110,7 @@ void workerproposal::vote(uint64_t proposal_id, uint16_t direction, account_name
     	            _self,
     	            prop.id,
                     direction,
-                    prop.created + prop.cycles * env_struct1.cycle_duration,
+                    prop.created + prop.cycles * wp_env_struct.cycle_duration,
                     voter
 	            )).send();
 
@@ -135,7 +125,7 @@ void workerproposal::vote(uint64_t proposal_id, uint16_t direction, account_name
     	        _self,
     	        prop.id,
                 direction,
-                prop.created + prop.cycles * env_struct1.cycle_duration,
+                prop.created + prop.cycles * wp_env_struct.cycle_duration,
                 voter
 	        )).send();
         }
@@ -196,14 +186,14 @@ void workerproposal::claim(uint64_t proposal_id) {
     }); 
 }
 
-bool workerproposal::check_fee_treshold(proposal p) {
+bool workerproposal::check_fee_threshold(proposal p) {
 
     //      1. min 20% YES votes
     //      2. 0.1% of all TLOS tokens voting at the conclusion of voting
             // 5% of voters for test (TO CHANGE)
 
     uint64_t total_votes = (p.yes_count + p.no_count + p.abstain_count); //total votes cast on proposal
-    uint64_t q_fee_refund_thresh = env_struct1.total_voters / 20; //0.1% of all registered voters // 10% of voters for test (TO CHANGE)
+    uint64_t q_fee_refund_thresh = wp_env_struct.total_voters / 20; //0.1% of all registered voters // 10% of voters for test (TO CHANGE)
     uint64_t p_fee_refund_thresh = total_votes / 5; //20% of total votes
 
     return p.yes_count > 0
@@ -211,7 +201,7 @@ bool workerproposal::check_fee_treshold(proposal p) {
         && total_votes >= q_fee_refund_thresh;
 }
 
-bool workerproposal::check_treshold(proposal p) {
+bool workerproposal::check_threshold(proposal p) {
 
     //      1. >50% YES votes over NO votes
     //      2.  5.0% of votes from all votable TLOS tokens at the conclusion of the Voting Period
@@ -220,12 +210,12 @@ bool workerproposal::check_treshold(proposal p) {
     uint64_t total_votes = (p.yes_count + p.no_count + p.abstain_count ); //total votes cast on proposal    
 
     return p.yes_count > p.no_count
-            && total_votes >= env_struct1.total_voters / 10;
+            && total_votes >= wp_env_struct.total_voters / 10;
 }
 
 void workerproposal::update_outstanding(proposal &p) {
     
-    uint64_t current_cycle = (now() - p.created) / env_struct1.cycle_duration;
+    uint64_t current_cycle = (now() - p.created) / wp_env_struct.cycle_duration;
     
     if(current_cycle > p.cycles) {
         current_cycle = p.cycles;
@@ -235,13 +225,13 @@ void workerproposal::update_outstanding(proposal &p) {
         p.outstanding += p.amount *  (current_cycle - p.last_cycle_check);
     }
 
-    if(current_cycle > 0 && p.fee && check_fee_treshold(p)) {
+    if(current_cycle > 0 && p.fee && check_fee_threshold(p)) {
         p.outstanding += p.fee;
         p.fee = 0;
     }
     
     p.last_cycle_check = current_cycle;
-    p.last_cycle_status = check_treshold(p);
+    p.last_cycle_status = check_threshold(p);
 }
 
 void workerproposal::update_env() {
@@ -252,9 +242,9 @@ void workerproposal::update_env() {
     uint64_t new_quorum = e.total_voters / 20; // 5% of all registered voters
     uint64_t new_total_voters = e.total_voters;
 
-    env_struct1.quorum_threshold = new_quorum;
-    env_struct1.total_voters = new_total_voters;
+    wp_env_struct.quorum_threshold = new_quorum;
+    wp_env_struct.total_voters = new_total_voters;
 }
 
 
-EOSIO_ABI( workerproposal, (propose)(vote)(claim))
+EOSIO_ABI( workerproposal, (submission)(vote)(claim))
