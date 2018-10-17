@@ -3122,7 +3122,7 @@ BOOST_FIXTURE_TEST_CASE( worker_proposal, eosio_system_tester ) try {
 
       // check vote integrity
       BOOST_REQUIRE_EQUAL( wasm_assert_msg( "Invalid Vote. [0 = NO, 1 = YES, 2 = ABSTAIN]" ), vote_proposal(0, 3, N(voteraaaaaaa)));
-      BOOST_REQUIRE_EQUAL( wasm_assert_msg( "VoterID Not Found" ), vote_proposal(0, 1, N(proposer1111)));
+      BOOST_REQUIRE_EQUAL( wasm_assert_msg( "Voter not registered in trail service" ), vote_proposal(0, 1, N(proposer1111)));
       BOOST_REQUIRE_EQUAL( wasm_assert_msg( "Proposal Not Found" ), vote_proposal(100, 1, N(voteraaaaaaa)));
 
       // 40 voters -> 5% = 2 -> 10% = 4

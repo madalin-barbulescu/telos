@@ -33,7 +33,7 @@ void workerproposal::submission(account_name proposer, std::string title, std::s
     action(permission_level{ proposer, N(active) }, N(eosio.token), N(transfer), make_tuple(
     	proposer,
         N(eosio.saving),
-        asset(fee_amount, S(4, TLOS)),
+        asset(int64_t(fee_amount), S(4, TLOS)),
         std::string("Worker Proposal Fee")
 	)).send();
 
@@ -66,7 +66,7 @@ void workerproposal::vote(uint64_t proposal_id, uint16_t direction, account_name
     voters_table voters(N(trailservice), voter);
     auto v = voters.find(voter);
 
-    eosio_assert(v != voters.end(), "VoterID Not Found");
+    eosio_assert(v != voters.end(), "Voter not registered in trail service");
     
     auto vid = *v;
 
@@ -78,59 +78,27 @@ void workerproposal::vote(uint64_t proposal_id, uint16_t direction, account_name
 
     eosio_assert(prop.created + prop.cycles * wp_env_struct.cycle_duration > now(), "Proposal Has Expired");
 
-    if (vid.receipt_list.empty()) {
+    for (votereceipt r : vid.receipt_list) {
+        if (r.vote_key == proposal_id) {
 
-        action(permission_level{ voter, N(active) }, N(trailservice), N(addreceipt), make_tuple(
-    	    _self,      
-    	    _self,
-    	    prop.id,
-            direction,
-            prop.created + prop.cycles * wp_env_struct.cycle_duration,
-            voter
-	    )).send();
-
-    } else {
-
-        bool found = false;
-
-        for (votereceipt r : vid.receipt_list) {
-            if (r.vote_key == proposal_id) {
-
-                found = true;
-
-                switch (r.direction) {
-                    case 0 : prop.no_count = (prop.no_count - 1); break; // removed uint64_t(r.weight)
-                    case 1 : prop.yes_count = (prop.yes_count - 1); break; // removed uint64_t(r.weight)
-                    case 2 : prop.abstain_count = (prop.abstain_count - 1); break; // removed uint64_t(r.weight)
-                }
-
-
-                action(permission_level{ voter, N(active) }, N(trailservice), N(addreceipt), make_tuple(
-    	            _self,      
-    	            _self,
-    	            prop.id,
-                    direction,
-                    prop.created + prop.cycles * wp_env_struct.cycle_duration,
-                    voter
-	            )).send();
-
-
-                break;
+            switch (r.direction) {
+                case 0 : prop.no_count = (prop.no_count - 1); break; // removed uint64_t(r.weight)
+                case 1 : prop.yes_count = (prop.yes_count - 1); break; // removed uint64_t(r.weight)
+                case 2 : prop.abstain_count = (prop.abstain_count - 1); break; // removed uint64_t(r.weight)
             }
-        }
 
-        if (found == false) {
-            action(permission_level{ voter, N(active) }, N(trailservice), N(addreceipt), make_tuple(
-    	        _self,      
-    	        _self,
-    	        prop.id,
-                direction,
-                prop.created + prop.cycles * wp_env_struct.cycle_duration,
-                voter
-	        )).send();
+            break;
         }
-
     }
+
+    action(permission_level{ voter, N(active) }, N(trailservice), N(addreceipt), make_tuple(
+        _self,      
+        _self,
+        prop.id,
+        direction,
+        prop.created + prop.cycles * wp_env_struct.cycle_duration,
+        voter
+    )).send();
 
     int64_t new_weight = get_liquid_tlos(voter);
 
@@ -170,7 +138,7 @@ void workerproposal::claim(uint64_t proposal_id) {
         action(permission_level{ _self, N(active) }, N(eosio.token), N(transfer), make_tuple(
     	    N(eosio.saving),
             po.proposer,
-            asset(po.outstanding, S(4, TLOS)),
+            asset(int64_t(po.outstanding), S(4, TLOS)),
             std::string("Worker Proposal Funds")
 	    )).send();
 
